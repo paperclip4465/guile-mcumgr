@@ -2,8 +2,7 @@
   (name "mcumgr")
   (prefix "guile")
   (version "0.0.1")
-  (author
-    "Mitchell Schmeisser <mfs5173@arl.psu.edu>")
+  (author "Mitchell Schmeisser")
   (copyright (2022))
   (synopsis
     "The mcumgr smp protocol is used to manage microcontrollers.")
