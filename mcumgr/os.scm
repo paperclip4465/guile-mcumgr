@@ -1,5 +1,5 @@
 (define-module (mcumgr os)
-  #:use-module (smp)
+  #:use-module (mcumgr)
   #:use-module (cbor)
   #:export (os-group
 	    echo
