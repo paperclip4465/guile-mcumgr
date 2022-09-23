@@ -1,0 +1,28 @@
+# -*- mode: org; coding: utf-8; -*-
+
+#+TITLE: Guile Mcumgr NEWS – history of user-visible changes
+#+STARTUP: content hidestars
+
+Copyright © (2022) Mitchell Schmeisser <mfs5173@arl.psu.edu>
+
+  Copying and distribution of this file, with or without modification,
+  are permitted in any medium without royalty provided the copyright
+  notice and this notice are preserved.
+
+Please send Guile Mcumgr bug reports to <mfs5173@arl.psu.edu>.
+
+* Publication at 0.0.1
+
+Initial Release!
+
+Added limited support for the `os` and `image` mcumgr groups.
+
+Supported `os` commands:
+- echo
+- reset
+
+Supported `image` commands:
+
+- erase
+- list
+- upload
