@@ -20,7 +20,8 @@
 	    image-group
 	    image-list
 	    image-erase
-	    image-upload))
+	    image-upload
+	    image-confirm))
 
 (define-record-type* <image>
   image make-image
@@ -57,7 +58,8 @@
 	      (smp-connection (smp-frame
 			       (op 2)
 			       (group image-group)
-			       (command 5))))))
+			       (command 5)
+			       (data (scm->cbor '())))))))
 
 
 (define %chunk-size 512)
@@ -87,3 +89,15 @@
 			(chunkify port '() 0)))))
     (map (lambda (x) (cbor->scm (smp-data x)))
 	 (map smp-connection smp-frames))))
+
+
+(define* (image-confirm smp-connection hash #:optional (confirm #t))
+  (let ((smp (smp-frame
+	      (op 2)
+	      (group image-group)
+	      (command 0)
+	      (data (scm->cbor `(,@(if confirm
+				      '()
+				      `(("hash" . ,hash)))
+				 ("confirm" . ,confirm)))))))
+    (cbor->scm (smp-data (smp-connection smp)))))
