@@ -29,5 +29,8 @@ SMP-CONNECTION should be a thunk which accepts a single <smp-frame> argument."
   (let* ((resp (smp-connection (smp-frame
 				(group os-group)
 				(command 5)
-				(op 2)))))
-    (cbor->scm (smp-data resp))))
+				(op 2))))
+	 (data (cbor->scm (smp-data resp))))
+    (if (null? data)
+	#t
+	data)))
