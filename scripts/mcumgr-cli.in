@@ -1,0 +1,111 @@
+#!@GUILE@ \
+--no-auto-compile -e main -s
+!#
+
+;; bin/mcumgr --- mcumgr cli -*- coding: utf-8 -*-
+
+(use-modules (config)
+	     (config api)
+	     (config parser sexp)
+	     (config licenses)
+	     (mcumgr)
+	     (mcumgr image)
+	     (mcumgr os)
+	     (ice-9 match)
+	     (ice-9 regex)
+	     (ice-9 format)
+	     (srfi srfi-19)
+	     (srfi srfi-26))
+
+(define (connstring? val)
+  (string-match ".+:[0-9]+" val))
+
+(define udp smp-udp-connection)
+
+(define (parse-connstring val)
+  (let ((lst (string-split val #\:)))
+    (list (car lst)
+	  (string->number (cadr lst)))))
+
+(define %configuration
+  (configuration
+   (name 'mcumgr-cli)
+   #;
+   (version @HVERSION@)
+   #;
+   (author @AUTHOR@)
+   #;
+   (copyright @COPYRIGHT@)
+   #;
+   (license @LICENSE@)
+   (synopsis "Management tool for microcontrollers")
+   (description "guile-mcumgr provides a command line application and a set of
+Guile libraries which implement the mcumgr smp protocol.")
+
+   (keywords
+    (list
+     (setting (name 'connstring) (default "127.0.0.1:1337")
+	      (character #f) (test connstring?))
+     (setting (name 'conntype) (default udp)
+	      (character #f) (test procedure?)
+	      (handler eval-string))))
+
+   (subcommands
+    (list
+     (configuration
+      (name 'image)
+      (wanted '((keywords connstring conntype)))
+      (synopsis "Manage MCU images")
+      (subcommands
+       (list (configuration
+	      (name 'list)
+	      (wanted '((keywords connstring conntype)))
+	      (synopsis "list MCU images"))
+	     (configuration
+	      (name 'upload)
+	      (wanted '((keywords connstring conntype)))
+	      (arguments
+	       (list (argument (name 'file)
+			       (default #f)
+			       (synopsis "image to upload")
+			       (test file-exists?))))
+	      (synopsis "Upload image to MCU"))
+	     (configuration
+	      (name 'confirm)
+	      (wanted '((keywords connstring conntype)))
+	      (synopsis "Confirm currently running image"))
+	     (configuration
+	      (name 'erase)
+	      (wanted '((keywords connstring conntype)))
+	      (synopsis "Erase unconfirmed image in secondary slot.")))))
+     (configuration
+      (name 'reset)
+      (wanted '((keywords connstring conntype)))
+      (synopsis "Reset device"))))))
+
+
+(define* (main #:optional (args (command-line)))
+  "Entry point for the command-line application. ARGS should be a
+normal command-line list, e.g. '(\"mcumgr\" \"image\" \"list\""
+  (let* ((options (getopt-config args %configuration))
+	 (conn (apply (option-ref options 'conntype)
+		      (parse-connstring (option-ref options 'connstring)))))
+    (format #t "~{~a~^~%~}~&"
+	    (or
+	     (match (full-command options)
+	       (("mcumgr-cli")
+		(emit-help options))
+	       (("mcumgr-cli" "reset")
+		(reset conn))
+	       (("mcumgr-cli" "image")
+		(emit-help options))
+	       (("mcumgr-cli" "image" "list")
+		(image-list conn))
+	       (("mcumgr-cli" "image" "upload")
+		(image-upload conn (option-ref options '(file))))
+	       (("mcumgr-cli" "image" "erase")
+		(image-erase conn))
+	       (("mcumgr-cli" "image" "confirm")
+		(image-confirm conn (image-hash
+				     (car (image-list conn))))))
+	     #t))))

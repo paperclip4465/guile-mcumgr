@@ -1,4 +1,4 @@
-bin_SCRIPTS = 
+bin_SCRIPTS = scripts/mcumgr-cli
 
 # Handle substitution of fully-expanded Autoconf variables.
 do_subst = $(SED)					\
@@ -32,8 +32,9 @@ SUFFIXES = .scm .go
 .scm.go:
 	$(AM_V_GEN)$(top_builddir)/pre-inst-env $(GUILE_TOOLS) compile $(GUILE_WARNINGS) -o "$@" "$<"
 
-SOURCES = mcumgr/os.scm \
-          mcumgr/image.scm \
+SOURCES = mcumgr/image.go \
+          mcumgr/os.go \
+          guix/records.scm \
           mcumgr.scm
 
 TESTS = 

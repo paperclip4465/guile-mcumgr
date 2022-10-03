@@ -16,11 +16,15 @@
   (skip ())
   (files (libraries
 	   ((directory
-	      "mcumgr"
-	      ((scheme-file "os") (scheme-file "image")))
+	     "mcumgr"
+	     ((compiled-scheme-file "image")
+	      (compiled-scheme-file "os")))
+	    (directory
+	     "guix"
+	     ((scheme-file "records")))
 	    (scheme-file "mcumgr")))
 	 (tests ((directory "tests" ())))
-	 (programs ((directory "scripts" ())))
+	 (programs ((directory "scripts" ((in-file "mcumgr-cli")))))
 	 (documentation
 	   ((directory "doc" ((texi-file "mcumgr")))
 	    (text-file "COPYING")

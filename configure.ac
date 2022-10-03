@@ -12,7 +12,7 @@ AM_SILENT_RULES([yes])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])
-
+AC_CONFIG_FILES([scripts/mcumgr-cli],[chmod +x scripts/mcumgr-cli])
 dnl Search for 'guile' and 'guild'.  This macro defines
 dnl 'GUILE_EFFECTIVE_VERSION'.
 GUILE_PKG([3.0 2.2 2.0])
