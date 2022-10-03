@@ -108,4 +108,4 @@ normal command-line list, e.g. '(\"mcumgr\" \"image\" \"list\""
 	       (("mcumgr-cli" "image" "confirm")
 		(image-confirm conn (image-hash
 				     (car (image-list conn))))))
-	     #t))))
+	     "Success!"))))
