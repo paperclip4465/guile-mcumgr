@@ -30,13 +30,9 @@
 (define %configuration
   (configuration
    (name 'mcumgr-cli)
-   #;
    (version @HVERSION@)
-   #;
    (author @AUTHOR@)
-   #;
    (copyright @COPYRIGHT@)
-   #;
    (license @LICENSE@)
    (synopsis "Management tool for microcontrollers")
    (description "guile-mcumgr provides a command line application and a set of
@@ -54,16 +50,16 @@ Guile libraries which implement the mcumgr smp protocol.")
     (list
      (configuration
       (name 'image)
-      (wanted '((keywords connstring conntype)))
+      (wanted '((keywords . (connstring conntype))))
       (synopsis "Manage MCU images")
       (subcommands
        (list (configuration
 	      (name 'list)
-	      (wanted '((keywords connstring conntype)))
+	      (wanted '((keywords . (connstring conntype))))
 	      (synopsis "list MCU images"))
 	     (configuration
 	      (name 'upload)
-	      (wanted '((keywords connstring conntype)))
+	      (wanted '((keywords . (connstring conntype))))
 	      (arguments
 	       (list (argument (name 'file)
 			       (default #f)
@@ -90,22 +86,26 @@ normal command-line list, e.g. '(\"mcumgr\" \"image\" \"list\""
   (let* ((options (getopt-config args %configuration))
 	 (conn (apply (option-ref options 'conntype)
 		      (parse-connstring (option-ref options 'connstring)))))
-    (format #t "~{~a~^~%~}~&"
-	    (or
-	     (match (full-command options)
-	       (("mcumgr-cli")
-		(emit-help options))
-	       (("mcumgr-cli" "reset")
-		(reset conn))
-	       (("mcumgr-cli" "image")
-		(emit-help options))
-	       (("mcumgr-cli" "image" "list")
-		(image-list conn))
-	       (("mcumgr-cli" "image" "upload")
-		(image-upload conn (option-ref options '(file))))
-	       (("mcumgr-cli" "image" "erase")
-		(image-erase conn))
-	       (("mcumgr-cli" "image" "confirm")
-		(image-confirm conn (image-hash
-				     (car (image-list conn))))))
-	     "Success!"))))
+    (match (full-command options)
+      (("mcumgr-cli")
+       (if (option-ref options 'version)
+	   (emit-version options)
+	   (emit-help options)))
+      (("mcumgr-cli" "reset")
+       (format #t "~{~{~a ~a~}~%~}"
+	       (reset conn)))
+      (("mcumgr-cli" "image" "list")
+       (format #t "~{~a~%~}"
+	       (image-list conn)))
+      (("mcumgr-cli" "image" "upload")
+       (format #t "~a~&"
+	       (image-upload conn (option-ref options '(file)))))
+      (("mcumgr-cli" "image" "erase")
+       (format #t "~a~&"
+	       (image-erase conn)))
+      (("mcumgr-cli" "image" "confirm")
+       (format #t "~a~&"
+	       (image-confirm conn (image-hash
+				    (car (image-list conn))))))
+      (("mcumgr-cli" "echo")
+       (format #t "~a~&" (echo conn (option-ref options '(message))))))))
