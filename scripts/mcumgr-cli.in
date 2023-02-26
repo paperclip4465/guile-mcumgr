@@ -68,16 +68,28 @@ Guile libraries which implement the mcumgr smp protocol.")
 	      (synopsis "Upload image to MCU"))
 	     (configuration
 	      (name 'confirm)
-	      (wanted '((keywords connstring conntype)))
 	      (synopsis "Confirm currently running image"))
 	     (configuration
 	      (name 'erase)
-	      (wanted '((keywords connstring conntype)))
 	      (synopsis "Erase unconfirmed image in secondary slot.")))))
+
+     (configuration
+      (name 'echo)
+      (wanted '((keywords . (connstring conntype))))
+      (arguments
+       (list (argument (name 'message)
+		       (default "hello world!")
+		       (synopsis "Message to echo")
+		       (test string?)))))
      (configuration
       (name 'reset)
       (wanted '((keywords connstring conntype)))
-      (synopsis "Reset device"))))))
+      (synopsis "Reset device"))))
+
+   (parser sexp-parser)
+   (directory (list
+	       (in-home ".mcumgr/")
+	       (in-cwd ".config/")))))
 
 
 (define* (main #:optional (args (command-line)))
