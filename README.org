@@ -2,3 +2,80 @@
 
 #+TITLE: README for Guile Mcumgr
 
+* guile-mcumgr
+
+This project is a guile implementation of the [[https://docs.zephyrproject.org/3.2.0/services/device_mgmt/smp_protocol.html][SMP]] protocol used by the
+[[https://docs.zephyrproject.org/latest/services/device_mgmt/mcumgr.html][mcumgr]] tool.
+
+* Why?
+
+This implementation has a much smaller dependency graph and is easier
+to cross compile than the golang version.  This impementation does not
+have as fancy of a cli and is mostly intended to be used as a library
+in a broader application.
+
+* Usage
+
+** Making a "connection"
+
+Currently only UDP connections are supported (please help!).
+
+#+BEGIN_SRC scheme
+(use-modules (mcumgr))
+
+(define my-connection (smp-udp-connection "192.168.1.100" 1337))
+#+END_SRC
+
+~my-connection~ now contains a procedure which sends SMP frames to
+this address.
+
+** Sending a Command
+
+SMP commands all have the lambda form ~(command smp-connection ...)~.
+Several commands are implemented and some commands require additonal parameters.
+
+The ~echo~ command is great for testing connection to your board.
+
+#+BEGIN_SRC scheme
+  (use-modules (mcumgr)
+	       (mcumgr os))
+
+  (echo my-connection "Hello World!")
+#+END_SRC
+
+* Uploading an Image
+
+Image upload is very simple
+
+#+BEGIN_SRC scheme
+  (use-modules (mcumgr)
+	       (mcumgr image))
+
+  (image-upload my-connection "new-signed-firmware.bin"
+		#:chunk-size 1024)
+#+END_SRC
+
+The keyword ~#:chunk-size~ can be used to adjust how many bytes are
+transfered in a single SMP frame.
+
+It is not very refined right now.
+
+* Commands
+
+The following commands are implemented:
+
+** OS commands
+
+| Name    | Description       |
+|---------+-------------------|
+| ~echo~  | echo given string |
+| ~reset~ | reset device      |
+
+** Image commands
+
+| Name            | Description                    |
+|-----------------+--------------------------------|
+| ~image-list~    | List device image slots        |
+| ~image-upload~  | Upload given image             |
+| ~image-erase~   | Erase secondary slot on device |
+| ~image-confirm~ | Confirm the running image.     |
