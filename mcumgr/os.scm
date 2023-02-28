@@ -22,7 +22,7 @@ SMP-CONNECTION should be a thunk which accepts a single <smp-frame> argument."
 	 (r (assoc-ref data "r")))
     (if rc
 	`((#f . ,rc))
-	rc)))
+	r)))
 
 (define (reset smp-connection)
   "Reset device"
