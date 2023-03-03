@@ -1,5 +1,7 @@
 (define-module (mcumgr)
+  #:use-module (cbor)
   #:use-module (guix records)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-26)
   #:use-module (guix records)
@@ -13,7 +15,9 @@
 	    smp-op
 	    smp-command
 	    smp-sequence-num
-	    smp-data))
+	    smp-data
+	    smp-error-from-code
+	    smp-error-code))
 
 (define-record-type* <smp-frame>
   smp-frame make-smp-frame
@@ -28,12 +32,38 @@
   (data smp-data
 	(default #vu8())))
 
+(define %status-codes
+  '((#:ok . 0)
+    (#:unknown . 1)
+    (#:no-memory . 2)
+    (#:invalid . 3)
+    (#:timeout . 4)
+    (#:no-entry . 5)
+    (#:bad-state . 6)
+    (#:response-too-long . 7)
+    (#:not-supported . 8)
+    (#:corrupted-payload . 9)
+    (#:Device-busy . 10)
+    (#:use-error-base . 256)))
+
+(define (smp-error-code result)
+  (assoc-ref %status-codes result))
+
+(define (smp-error-from-code code)
+  (car
+   (find (lambda (x)
+	   (= code (cdr x)))
+	 %status-codes)))
+
+
+;; Seconds before timeout condition is raised
+(define %smp-timeout 5)
+
 (define* (serialize-smp frame #:key
 			(additional-commands '())
 			(additional-ret-codes '()))
   (let ((bv (make-bytevector 8)))
-    (bytevector-u8-set! bv 0 (logior (ash (smp-result frame) 3)
-				     (smp-op frame)))
+    (bytevector-u8-set! bv 0 (smp-op frame))
     (bytevector-u8-set! bv 1 0)
     (bytevector-u16-set! bv 2 (bytevector-length (smp-data frame))
 			 (endianness big))
@@ -55,13 +85,25 @@
      (data (get-bytevector-n port
 			     (bytevector-u16-ref bv 2 (endianness big)))))))
 
+
 (define (send-udp-smp smp address port)
-  (let ((s (socket AF_INET SOCK_DGRAM 0)))
+  (let ((s (socket AF_INET SOCK_DGRAM 0))
+	(timed-out #f))
     (sendto s (serialize-smp smp) AF_INET
 	    (inet-pton AF_INET address) port)
     (let* ((bv (make-bytevector 512))
-	   (len (car (recvfrom! s bv))))
-      (call-with-input-bytevector bv read-smp))))
+	   (fd-list (car (select (list s) '() '() %smp-timeout))))
+      (if (nil? fd-list)
+	  (smp-frame
+	   (result 0)
+	   (op 2)
+	   (group 0)
+	   (sequence-num 0)
+	   (command 0)
+	   (data (scm->cbor `(("rc" . ,(smp-error-code #:timeout))))))
+	  (begin
+	    (recvfrom! s bv)
+	    (call-with-input-bytevector bv read-smp))))))
 
 (define (smp-udp-connection address port)
   (cut send-udp-smp <> address port))

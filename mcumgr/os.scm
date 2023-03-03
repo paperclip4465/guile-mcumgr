@@ -21,7 +21,7 @@ SMP-CONNECTION should be a thunk which accepts a single <smp-frame> argument."
 	 (rc (assoc-ref data "rc"))
 	 (r (assoc-ref data "r")))
     (if rc
-	`((#f . ,rc))
+	`((#f . ,(smp-error-from-code rc)))
 	r)))
 
 (define (reset smp-connection)
@@ -32,5 +32,5 @@ SMP-CONNECTION should be a thunk which accepts a single <smp-frame> argument."
 				(op 2))))
 	 (data (cbor->scm (smp-data resp))))
     (if (null? data)
-	`((rc . 0))
+	`((rc . #:ok))
 	data)))
