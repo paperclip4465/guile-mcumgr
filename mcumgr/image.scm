@@ -51,11 +51,15 @@
        (array->list (assoc-ref resp "images"))))
 
 (define (image-list smp-connection)
-  (let ((smp (smp-frame (op 0)
-			(group image-group)
-			(command 0))))
-    (smp-image-resp->images
-     (cbor->scm (smp-data (smp-connection smp))))))
+  (let* ((smp (smp-frame (op 0)
+			 (group image-group)
+			 (command 0)))
+	 (resp (cbor->scm (smp-data (smp-connection smp)))))
+    (match resp
+      ((("rc" . code))
+       (raise-exception (make-smp-exception (smp-error-from-code code))))
+      (_
+       (smp-image-resp->images resp)))))
 
 (define (image-erase smp-connection)
   (match (cbor->scm (smp-data
