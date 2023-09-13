@@ -6,8 +6,10 @@
   #:use-module (srfi srfi-26)
   #:use-module (guix records)
   #:use-module (ice-9 binary-ports)
+  #:use-module (ice-9 exceptions)
   #:use-module (rnrs bytevectors)
-  #:export (smp-udp-connection
+  #:export (make-smp-exception
+	    smp-udp-connection
 	    smp-frame
 	    smp-frame?
 	    smp-result
@@ -18,6 +20,10 @@
 	    smp-data
 	    smp-error-from-code
 	    smp-error-code))
+
+(define make-smp-exception
+  (record-constructor
+   (make-exception-type '&smp-error &error '(status))))
 
 (define-record-type* <smp-frame>
   smp-frame make-smp-frame
