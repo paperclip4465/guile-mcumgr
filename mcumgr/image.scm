@@ -2,6 +2,7 @@
   #:use-module (guix records)
   #:use-module (ice-9 binary-ports)
   #:use-module (ice-9 format)
+  #:use-module (ice-9 match)
   #:use-module (rnrs bytevectors)
   #:use-module (srfi srfi-9)
   #:use-module (gcrypt hash)
@@ -57,12 +58,15 @@
      (cbor->scm (smp-data (smp-connection smp))))))
 
 (define (image-erase smp-connection)
-  (cbor->scm (smp-data
-	      (smp-connection (smp-frame
-			       (op 2)
-			       (group image-group)
-			       (command 5)
-			       (data (scm->cbor '())))))))
+  (match (cbor->scm (smp-data
+		     (smp-connection (smp-frame
+				      (op 2)
+				      (group image-group)
+				      (command 5)
+				      (data (scm->cbor '()))))))
+    ((("rc" . 0)) #t)
+    ((("rc" . code))
+     (raise-exception (make-smp-exception (smp-error-from-code code))))))
 
 
 (define %chunk-size 512)
