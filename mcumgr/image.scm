@@ -94,17 +94,29 @@
   (let ((smp-frames (call-with-input-file file
 		      (lambda (port)
 			(chunkify port '() 0)))))
-    (map (lambda (x) (cbor->scm (smp-data x)))
-	 (map smp-connection smp-frames))))
+    (and-map (lambda (x)
+	       (match (cbor->scm (smp-data (smp-connection x)))
+		 ((("rc" . 0) ("off" . off))
+		  #t)
+		 ((("rc" . code) ("off" . off))
+		  (values #f
+			  off))
+		 ((("rc" . code))
+		  (raise-exception (make-smp-exception (smp-error-from-code code))))))
+	     smp-frames)))
 
 
 (define* (image-confirm smp-connection hash #:optional (confirm #t))
-  (let ((smp (smp-frame
-	      (op 2)
-	      (group image-group)
-	      (command 0)
-	      (data (scm->cbor `(,@(if confirm
-				      '()
-				      `(("hash" . ,hash)))
-				 ("confirm" . ,confirm)))))))
-    (cbor->scm (smp-data (smp-connection smp)))))
+  (let* ((smp (smp-frame
+	       (op 2)
+	       (group image-group)
+	       (command 0)
+	       (data (scm->cbor `(,@(if confirm
+					'()
+					`(("hash" . ,hash)))
+				  ("confirm" . ,confirm))))))
+	 (resp (cbor->scm (smp-data (smp-connection smp)))))
+    (match resp
+      ((("rc" . code))
+       (raise-exception (make-smp-exception (smp-error-from-code code))))
+      (_ (smp-image-resp->images resp)))))
